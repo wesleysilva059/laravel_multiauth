@@ -33,10 +33,16 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         //Validation...
-
+        $this->validator($request);
         //Login the admin...
+        if(Auth::guard('admin')->attemp($request->only('email','password'),$request->filled('remember'))){
+            return redirect()
+                ->intended(route('admin.home'))
+                ->with('status','You are logged in as Admin!');
+        }
 
         //Redirect the admin...
+        return $this->loginFailed();
     }
 
     /**
@@ -57,7 +63,17 @@ class LoginController extends Controller
      */
     private function validator(Request $request)
     {
-      //validate the form...
+      //Validations rules
+      $rules = [
+          'email' => 'required|email|exists:admins|min:5|max:191',
+          'password' => 'required|string|min:4|max:255'
+      ];
+
+      $messages = [
+          'email.exists' => 'These credentials do not match our records.'
+      ];
+
+      $request->validate($rules,$messages);
     }
 
     /**
@@ -68,5 +84,9 @@ class LoginController extends Controller
     private function loginFailed()
     {
       //Login failed...
+      return redirect()
+        ->back()
+        ->withInput()
+        ->with('error','Login failed, please try again!');
     }
 }
